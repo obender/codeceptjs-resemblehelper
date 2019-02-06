@@ -87,7 +87,7 @@ class ResembleHelper extends Helper {
     /**
      * Check Visual Difference for Base and Screenshot Image
      * @param baseImage         Name of the Base Image (Base Image path is taken from Configuration)
-     * @param options           Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options, read more here: https://github.com/rsmbl/Resemble.js
+     * @param options           Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options
      * @returns {Promise<void>}
      */
     async seeVisualDiff(baseImage, options) {
@@ -114,7 +114,7 @@ class ResembleHelper extends Helper {
      *
      * @param selector   Selector which has to be compared expects these -> CSS|XPath|ID
      * @param baseImage  Base Image for comparison
-     * @param options    Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options, read more here: https://github.com/rsmbl/Resemble.js
+     * @param options    Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options
      * @returns {Promise<void>}
      */
     async seeVisualDiffForElement(selector, baseImage, options){
