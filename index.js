@@ -1,11 +1,12 @@
-'use strict';
+"use strict";
 
-// use any assertion library you like
-const resemble = require("resemblejs");
-const fs = require('fs');
-let assert = require('assert');
-const mkdirp = require('mkdirp');
-const getDirName = require('path').dirname;
+const resemble = require("resemblejs"),
+	fs = require("fs"),
+	codeceptjs = require("codeceptjs"),
+	assert = require("assert"),
+	mkdirp = require("mkdirp"),
+	path = require("path"),
+	getDirName = path.dirname;
 
 /**
  * Resemble.js helper class for CodeceptJS, this allows screen comparison
@@ -13,227 +14,296 @@ const getDirName = require('path').dirname;
  */
 
 class ResembleHelper extends Helper {
+	constructor(config) {
+		super(config);
+	}
 
-    constructor(config) {
-        super(config);
-    }
+	/**
+	 * Compare Images
+	 * @param image1
+	 * @param image2
+	 * @param diffImage
+	 * @param options
+	 * @returns {Promise<any | never>}
+	 */
+	async _compareImages(image1, image2, diffImage, options) {
+		image1 = path.join(this.config.baseFolder, image1);
+		image2 = path.join(this.config.screenshotFolder, image2);
 
-    /**
-     * Compare Images
-     * @param image1
-     * @param image2
-     * @param diffImage
-     * @param options
-     * @returns {Promise<any | never>}
-     */
-    async _compareImages (image1, image2, diffImage, options) {
-        image1 = this.config.baseFolder + image1;
-        image2 = this.config.screenshotFolder + image2;
-        if(typeof this.config.consoleOutput == 'undefined')
-        {
-            this.config.consoleOutput = true
-        }
-        return new Promise((resolve, reject) => {
-            if (options.boundingBox !== undefined)
-            {
-                resemble.outputSettings({
-                    boundingBox: options.boundingBox
-                });
-            }
+		if (typeof this.config.consoleOutput == "undefined") {
+			this.config.consoleOutput = true;
+		}
 
-            if (options.tolerance !== undefined)
-            {
-                if(this.config.consoleOutput){
-                    console.log("Tolerance Level Provided " + options.tolerance);
-                }
-                var tolerance = options.tolerance;
-            }
-            resemble.compare(image1, image2, options, (err, data) => {        
-                if (err) {
-                    reject(err);
-                } else {         
-                    resolve(data);
-                    if (data.misMatchPercentage >= tolerance) {
-                        mkdirp(getDirName(this.config.diffFolder + diffImage), function (err) {
-                            if (err) return cb(err);
-                        });
-                        fs.writeFile(this.config.diffFolder + diffImage + '.png', data.getBuffer(), (err, data) => {
-                            if (err) {
-                                throw new Error(this.err);
-                            }
-                        });
-                    }
-                }
-            });
-        }).catch((error) => {
-            console.log('caught', error.message);
-        });
-    }
+		return new Promise((resolve, reject) => {
+			if (options.boundingBox !== undefined) {
+				resemble.outputSettings({
+					boundingBox: options.boundingBox
+				});
+			}
 
-    /**
-     *
-     * @param image1
-     * @param options
-     * @returns {Promise<*>}
-     */
-    async _fetchMisMatchPercentage (image1, options) {
-        var image2 = image1;
-        var diffImage = "Diff_" + image1.split(".")[0];
-        var result = this._compareImages(image1, image2, diffImage, options);
-        var data = await Promise.resolve(result);
-        return data.misMatchPercentage;
-    }
+			if (options.tolerance !== undefined) {
+				if (this.config.consoleOutput) {
+					console.log(
+						"Tolerance Level Provided " + options.tolerance
+					);
+				}
+				var tolerance = options.tolerance;
+			}
 
-    /**
-     * Check Visual Difference for Base and Screenshot Image
-     * @param baseImage         Name of the Base Image (Base Image path is taken from Configuration)
-     * @param options           Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options, read more here: https://github.com/rsmbl/Resemble.js
-     * @returns {Promise<void>}
-     */
-    async seeVisualDiff(baseImage, options) {
-        if (options == undefined)
-        {
-            options = {};
-            options.tolerance = 0;
-        }
+			resemble.compare(image1, image2, options, (err, data) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+					if (data.misMatchPercentage >= tolerance) {
+						mkdirp(
+							getDirName(
+								path.join(this.config.diffFolder, diffImage)
+							),
+							function(err) {
+								if (err) return cb(err);
+							}
+						);
+						fs.writeFile(
+							path.join(this.config.diffFolder, diffImage + ".png"),
+							data.getBuffer(),
+							(err, data) => {
+								if (err) {
+									throw new Error(this.err);
+								}
+							}
+						);
+					}
+				}
+			});
+		}).catch((error) => {
+			console.log("caught", error.message);
+		});
+	}
 
-        if (options.prepareBaseImage !== undefined && options.prepareBaseImage)
-        {
-            await this._prepareBaseImage(baseImage);
-        }
+	/**
+	 *
+	 * @param image1
+	 * @param options
+	 * @returns {Promise<*>}
+	 */
+	async _fetchMisMatchPercentage(image1, options) {
+		var image2 = image1;
+		var diffImage = "Diff_" + image1.split(".")[0];
+		var result = this._compareImages(
+			image1,
+			image2,
+			diffImage,
+			options
+		);
+		var data = await Promise.resolve(result);
+		if (data) return data.misMatchPercentage;
 
-        var misMatch = await this._fetchMisMatchPercentage(baseImage, options);
-        if(this.config.consoleOutput){
-            console.log("MisMatch Percentage Calculated is " + misMatch);
-        }
-        assert(misMatch <= options.tolerance, "MissMatch Percentage " + misMatch);
-    }
+		return 0;
+	}
 
-    /**
-     * See Visual Diff for an Element on a Page
-     *
-     * @param selector   Selector which has to be compared expects these -> CSS|XPath|ID
-     * @param baseImage  Base Image for comparison
-     * @param options    Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options, read more here: https://github.com/rsmbl/Resemble.js
-     * @returns {Promise<void>}
-     */
-    async seeVisualDiffForElement(selector, baseImage, options){
+	/**
+	 * Check Visual Difference for Base and Screenshot Image
+	 * @param baseImage         Name of the Base Image (Base Image path is taken from Configuration)
+	 * @param options           Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options, read more here: https://github.com/rsmbl/Resemble.js
+	 * @returns {Promise<void>}
+	 */
+	async seeVisualDiff(baseImage, options) {
+		if (this.config.autoFolders) {
+			let visual = this.config.autoFolders.folder || "visual";
+			this.config.baseFolder = path.join(__dirname, visual);
+			this.config.screenshotFolder = path.join(__dirname, visual);
+		}
 
-        if (selector !== undefined)
-        {
-            if (options == undefined)
-            {
-                options = {};
-                options.tolerance = 0;
-            }
+		if (options == undefined) {
+			options = {};
+			options.tolerance = 0;
+		}
 
-            if (options.prepareBaseImage !== undefined && options.prepareBaseImage)
-            {
-                await this._prepareBaseImage(baseImage);
-            }
+		if (
+			options.prepareBaseImage !== undefined &&
+			options.prepareBaseImage
+		) {
+			await this._prepareBaseImage(baseImage);
+		}
 
-            options.boundingBox = await this._getBoundingBox(selector);
-            var misMatch = await this._fetchMisMatchPercentage(baseImage, options);
-            if(this.config.consoleOutput)
-            {
-                console.log("MisMatch Percentage Calculated is " + misMatch);
-            }
-            assert(misMatch <= options.tolerance, "MissMatch Percentage " + misMatch);
-        }
-        else {
-            return null;
-        }
-    }
+		var misMatch = await this._fetchMisMatchPercentage(
+			baseImage,
+			options
+		);
+		if (this.config.consoleOutput) {
+			console.log("MisMatch Percentage Calculated is " + misMatch);
+		}
 
-    /**
-     * Function to prepare Base Images from Screenshots
-     *
-     * @param screenShotImage  Name of the screenshot Image (Screenshot Image Path is taken from Configuration)
-     */
-    async _prepareBaseImage(screenShotImage) {
-        var configuration = this.config;
+		assert(
+			misMatch <= options.tolerance,
+			"MissMatch Percentage " + misMatch
+		);
+	}
 
-        await this._createDir(configuration.baseFolder + screenShotImage);
+	/**
+	 * See Visual Diff for an Element on a Page
+	 *
+	 * @param selector   Selector which has to be compared expects these -> CSS|XPath|ID
+	 * @param baseImage  Base Image for comparison
+	 * @param options    Options ex {prepareBaseImage: true, tolerance: 5} along with Resemble JS Options, read more here: https://github.com/rsmbl/Resemble.js
+	 * @returns {Promise<void>}
+	 */
+	async seeVisualDiffForElement(selector, baseImage, options) {
+		if (selector !== undefined) {
+			if (options == undefined) {
+				options = {};
+				options.tolerance = 0;
+			}
 
-        fs.access(configuration.screenshotFolder + screenShotImage, fs.constants.F_OK | fs.constants.W_OK, (err) => {
-            if (err) {
-                console.error(
-                    `${configuration.screenshotFolder + screenShotImage} ${err.code === 'ENOENT' ? 'does not exist' : 'is read-only'}`);
-            }
-        });
+			if (
+				options.prepareBaseImage !== undefined &&
+				options.prepareBaseImage
+			) {
+				await this._prepareBaseImage(baseImage);
+			}
 
-        fs.access(configuration.baseFolder, fs.constants.F_OK | fs.constants.W_OK, (err) => {
-            if (err) {
-                console.error(
-                    `${configuration.baseFolder} ${err.code === 'ENOENT' ? 'does not exist' : 'is read-only'}`);
-            }
-        });
+			options.boundingBox = await this._getBoundingBox(selector);
+			var misMatch = await this._fetchMisMatchPercentage(
+				baseImage,
+				options
+			);
+			if (this.config.consoleOutput) {
+				console.log("MisMatch Percentage Calculated is " + misMatch);
+			}
+			assert(
+				misMatch <= options.tolerance,
+				"MissMatch Percentage " + misMatch
+			);
+		} else {
+			return null;
+		}
+	}
 
-        fs.copyFileSync(configuration.screenshotFolder + screenShotImage, configuration.baseFolder + screenShotImage);
-    }
+	/**
+	 * Function to prepare Base Images from Screenshots
+	 *
+	 * @param screenShotImage  Name of the screenshot Image (Screenshot Image Path is taken from Configuration)
+	 */
+	async _prepareBaseImage(screenShotImage) {
+		var configuration = this.config;
 
-    /**
-     * Function to create Directory
-     * @param directory
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _createDir (directory) {
-        mkdirp.sync(getDirName(directory));
-    }
+		await this._createDir(
+			path.join(configuration.baseFolder, screenShotImage)
+		);
+		let location = path.join(
+			configuration.screenshotFolder,
+			screenShotImage
+		);
+		fs.access(
+			location,
+			fs.constants.F_OK | fs.constants.W_OK,
+			(err) => {
+				if (err) {
+					console.error(
+						`${location} ${
+							err.code === "ENOENT"
+								? "does not exist"
+								: "is read-only"
+						}`
+					);
+				}
+			}
+		);
 
-    /**
-     * Function to fetch Bounding box for an element, fetched using selector
-     *
-     * @param selector CSS|XPath|ID selector
-     * @returns {Promise<{boundingBox: {left: *, top: *, right: *, bottom: *}}>}
-     */
-    async _getBoundingBox(selector){
-        const browser = this._getBrowser();
+		fs.access(
+			configuration.baseFolder,
+			fs.constants.F_OK | fs.constants.W_OK,
+			(err) => {
+				if (err) {
+					console.error(
+						`${configuration.baseFolder} ${
+							err.code === "ENOENT"
+								? "does not exist"
+								: "is read-only"
+						}`
+					);
+				}
+			}
+		);
 
-        if (this.helpers['WebDriver']) {
-            const ele = await browser.$(selector);
-            var location = await ele.getLocation();
-            var size = await ele.getSize();
-        }
-        else {
-            var ele = await browser.element(selector)
-                .then((res) => {
-                    return res;
-                })
-                .catch((err) => {
-                    // Catch the error because webdriver.io throws if the element could not be found
-                    // Source: https://github.com/webdriverio/webdriverio/blob/master/lib/protocol/element.js
-                    return null;
-                });
-            var location = await browser.getLocation(selector);
-            var size = await browser.getElementSize(selector);
-        }
+		fs.copyFileSync(
+			location,
+			path.join(configuration.baseFolder, screenShotImage)
+		);
+	}
 
-        var bottom = size.height + location.y;
-        var right = size.width + location.x;
-        var boundingBox = {
-            left: location.x,
-            top: location.y,
-            right: right,
-            bottom: bottom
-        };
+	/**
+	 * Function to create Directory
+	 * @param directory
+	 * @returns {Promise<void>}
+	 * @private
+	 */
+	async _createDir(directory) {
+		if (this.config.autoFolders) {
+			mkdirp.sync(directory);
+		}
+		else
+		{
+			directory = getDirName(directory);
+			mkdirp.sync(directory);
+		}
+	}
 
-        return boundingBox;
-    }
+	/**
+	 * Function to fetch Bounding box for an element, fetched using selector
+	 *
+	 * @param selector CSS|XPath|ID selector
+	 * @returns {Promise<{boundingBox: {left: *, top: *, right: *, bottom: *}}>}
+	 */
+	async _getBoundingBox(selector) {
+		const browser = this._getBrowser();
 
-    _getBrowser() {
-        if (this.helpers['WebDriver']) {
-            return this.helpers['WebDriver'].browser;
-        }
-        if (this.helpers['Appium']) {
-            return this.helpers['Appium'].browser;
-        }
-        if (this.helpers['WebDriverIO']) {
-            return this.helpers['WebDriverIO'].browser;
-        }
-        throw new Error('No matching helper found. Supported helpers: WebDriver/Appium/WebDriverIO');
-    }
+		if (this.helpers["WebDriver"]) {
+			const ele = await browser.$(selector);
+			var location = await ele.getLocation();
+			var size = await ele.getSize();
+		} else {
+			var ele = await browser
+				.element(selector)
+				.then((res) => {
+					return res;
+				})
+				.catch((err) => {
+					// Catch the error because webdriver.io throws if the element could not be found
+					// Source: https://github.com/webdriverio/webdriverio/blob/master/lib/protocol/element.js
+					return null;
+				});
+			var location = await browser.getLocation(selector);
+			var size = await browser.getElementSize(selector);
+		}
+
+		var bottom = size.height + location.y;
+		var right = size.width + location.x;
+		var boundingBox = {
+			left: location.x,
+			top: location.y,
+			right: right,
+			bottom: bottom
+		};
+
+		return boundingBox;
+	}
+
+	_getBrowser() {
+		if (this.helpers["WebDriver"]) {
+			return this.helpers["WebDriver"].browser;
+		}
+		if (this.helpers["Appium"]) {
+			return this.helpers["Appium"].browser;
+		}
+		if (this.helpers["WebDriverIO"]) {
+			return this.helpers["WebDriverIO"].browser;
+		}
+		throw new Error(
+			"No matching helper found. Supported helpers: WebDriver/Appium/WebDriverIO"
+		);
+	}
 }
 
 module.exports = ResembleHelper;

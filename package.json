@@ -1,25 +1,42 @@
 {
-  "name": "codeceptjs-resemblehelper",
-  "version": "1.5.0",
-  "description": "Resemble Js helper for CodeceptJS, with WebdriverIO",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:Percona-Lab/codeceptjs-resemblehelper.git"
-  },
-  "dependencies": {
-    "assert": "^1.4.1",
-    "canvas": "^2.2.0",
-    "mz": "^2.7.0",
-    "resemblejs": "^3.0.0",
-    "mkdirp": "^0.5.1",
-    "path": "^0.12.7"
-  },
-  "keywords": [
-    "codeceptJS",
-    "codeceptjs",
-    "resemblejs",
-    "codeceptjs-resemble"
-  ],
-  "author": "Puneet Kala <puneet.kala@percona.com>",
-  "license": "MIT"
+	"name": "codeceptjs-resemblehelper",
+	"version": "1.5.0",
+	"description": "Resemble Js helper for CodeceptJS, with WebdriverIO",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:Percona-Lab/codeceptjs-resemblehelper.git"
+	},
+	"dependencies": {
+		"assert": "^2.0.0",
+		"canvas": "^2.5.0",
+		"codeceptjs": "^2.2.0",
+		"mkdirp": "^0.5.1",
+		"mz": "^2.7.0",
+		"resemblejs": "^3.1.0"
+	},
+	"peerDependencies": {
+		"codeceptjs": "*"
+	},
+	"devDependencies": {
+		"jest": "^24.8.0"
+	},
+	"scripts": {
+		"test": "jest"
+	},
+	"jest": {
+		"setupFilesAfterEnv": [
+			"<rootDir>/test/jest.init.js"
+		],
+		"testPathIgnorePatterns": [
+			"jest.init.js"
+		]
+	},
+	"keywords": [
+		"codeceptJS",
+		"codeceptjs",
+		"resemblejs",
+		"codeceptjs-resemble"
+	],
+	"author": "Puneet Kala <puneet.kala@percona.com>",
+	"license": "MIT"
 }

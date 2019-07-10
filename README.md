@@ -27,7 +27,7 @@ Example:
    }
 }
 ```
-To use the Helper, users must provide the three parameters:
+To use the Helper, users must provide the three parameters or autoFolders param:
 
 `screenshotFolder` : This will always have the same value as `output` in Codecept configuration, this is the folder where webdriverIO
 saves a screenshot when using `I.saveScreenshot` method
@@ -35,6 +35,32 @@ saves a screenshot when using `I.saveScreenshot` method
 `baseFolder`: This is the folder for base images, which will be used with screenshot for comparison
 
 `diffFolder`: This will the folder where resemble would try to store the difference image, which can be viewed later,
+
+`autoFolders`: This will create folder's directory in each folder when you run 
+the test, Ideal for component testing
+```json
+{
+   "helpers": {
+     "ResembleHelper" : {
+       "require": "codeceptjs-resemblehelper",
+       "autoFolders" : "true"
+     }
+   }
+}
+```
+also have an optional 'folder' parameter that control the folder name ('visual' by default)
+```json
+{
+   "helpers": {
+     "ResembleHelper" : {
+       "require": "codeceptjs-resemblehelper",
+       "autoFolders" : {
+         "folder": "componentImages"
+       }
+     }
+   }
+}
+```
 
 Usage, these are major functions that help in visual testing
 
