@@ -1,10 +1,6 @@
 const ResembleHelper = require("./../index"),
 	fs = require("fs");
 
-beforeAll(() => {
-	return initializeCityDatabase();
-});
-
 test("ResembleHelper init works", () => {
 	let helper = new ResembleHelper();
 });
