@@ -18,6 +18,9 @@ class ResembleHelper extends Helper {
 		super(config);
 	}
 
+	async _beforeSuite(suite) {
+		this.dir = getDirName(suite.file);
+	}
 	/**
 	 * Compare Images
 	 * @param image1
@@ -111,8 +114,8 @@ class ResembleHelper extends Helper {
 	async seeVisualDiff(baseImage, options) {
 		if (this.config.autoFolders) {
 			let visual = this.config.autoFolders.folder || "visual";
-			this.config.baseFolder = path.join(__dirname, visual);
-			this.config.screenshotFolder = path.join(__dirname, visual);
+			this.config.baseFolder = path.join(this.dir, visual);
+			this.config.screenshotFolder = path.join(this.dir, visual);
 		}
 
 		if (options == undefined) {
@@ -125,6 +128,14 @@ class ResembleHelper extends Helper {
 			options.prepareBaseImage
 		) {
 			await this._prepareBaseImage(baseImage);
+		}
+
+		if (this.config.prepareBaseImage) {
+			let imgLoc = path.join(
+				this.config.baseFolder,
+				baseImage + ".png"
+			);
+			this._getBrowser().saveScreenshot(imgLoc);
 		}
 
 		var misMatch = await this._fetchMisMatchPercentage(
@@ -242,9 +253,7 @@ class ResembleHelper extends Helper {
 	async _createDir(directory) {
 		if (this.config.autoFolders) {
 			mkdirp.sync(directory);
-		}
-		else
-		{
+		} else {
 			directory = getDirName(directory);
 			mkdirp.sync(directory);
 		}
